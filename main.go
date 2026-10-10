@@ -1,9 +1,9 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 	"log"
-	// "net/http"
+	"net/http"
 	"os"
 )
 
@@ -28,33 +28,18 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-func main(){
-	testWikiPage := &Page{Title: "TestPage", Body: []byte("This is the body of the test page!")}
-	error := testWikiPage.save()
-
-	if error != nil {
-		log.Fatal("Error saving test page: ", error)
-		return
-	}
-
-	log.Printf("Test page saved successfully with title '%s'", testWikiPage.Title)
-
-	page, error := loadPage("TestPage")
-	
-	if error != nil {
-		log.Fatal("Error loading test page: ", error)
-		return
-	}
-
-	log.Printf("Test page loaded successfully with title '%s' and body: '%s'", page.Title, page.Body)
+func handler(w http.ResponseWriter, r *http.Request){
+	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
 }
 
-// func handler(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Fprintf(w, "Hello, World!")
-// }
+func viewHandler(w http.ResponseWriter, r *http.Request){
+	wikiTitle := r.URL.Path[len("/view/"):]
+	page, _ := loadPage(wikiTitle)
+	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", page.Title, page.Body)
+}
 
-// func main() {
-// 	http.HandleFunc("/", handler)
-// 	log.Println("Server is running on http://localhost:3000")
-// 	log.Fatal(http.ListenAndServe(":3000", nil))
-// }
+func main() {
+	http.HandleFunc("/view/", viewHandler)
+	log.Println("Server is running on http://localhost:3000")
+	log.Fatal(http.ListenAndServe(":3000", nil))
+}
