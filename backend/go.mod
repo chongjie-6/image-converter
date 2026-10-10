@@ -1,0 +1,3 @@
+module imageconverter
+
+go 1.27.2
