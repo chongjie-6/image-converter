@@ -8,6 +8,7 @@ const FORMATS = ["jpeg", "png", "gif", "webp"];
 type Result = { url: string; name: string; before: number; after: number };
 
 const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
+const maxFileSize = 20 * 1024 * 1024; // 20 MB
 
 export default function Home() {
   const [format, setFormat] = useState("jpeg");
@@ -27,6 +28,12 @@ export default function Home() {
     setBusy(true);
     setError("");
     try {
+      if (file.size > maxFileSize) {
+        throw new Error(
+          `File size exceeds the maximum limit of ${kb(maxFileSize)}`,
+        );
+      }
+
       const res = await fetch(`${API}/convert`, { method: "POST", body });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
