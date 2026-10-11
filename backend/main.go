@@ -135,11 +135,8 @@ func createHandler(fn func(w http.ResponseWriter, r *http.Request)) http.Handler
 }
 
 func main() {
-	// Load env variables into os
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// .env is optional; in production, env vars come from the host
+	_ = godotenv.Load()
 
 	mux := http.NewServeMux()
 	
