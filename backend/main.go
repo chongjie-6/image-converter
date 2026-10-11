@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	maxUpload = 20 << 20
-	maxPixels = 50_000_000
+	maxUpload      = 20 << 20
+	maxPixels      = 50_000_000
 	DEFAULT_EFFORT = 8
 )
 
@@ -36,23 +36,23 @@ func writeToBuffer(imgBuf *bytes.Buffer, b []byte, err error) error {
 	return err
 }
 
-func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, quality int, lossy bool) (error) {
+func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, quality int, lossy bool) error {
 	switch format {
 	case "jpeg":
 		bytes, _, error := image.ExportJpeg(&vips.JpegExportParams{Interlace: true, Quality: quality})
-			return writeToBuffer(imgBuf, bytes, error)
+		return writeToBuffer(imgBuf, bytes, error)
 	case "png":
 		bytes, _, error := image.ExportPng(&vips.PngExportParams{Compression: 10, Interlace: true, Quality: quality})
-			return writeToBuffer(imgBuf, bytes, error)
+		return writeToBuffer(imgBuf, bytes, error)
 	case "gif":
 		bytes, _, error := image.ExportGIF(&vips.GifExportParams{Effort: DEFAULT_EFFORT})
-			return writeToBuffer(imgBuf, bytes, error)
+		return writeToBuffer(imgBuf, bytes, error)
 	case "webp":
 		bytes, _, error := image.ExportWebp(&vips.WebpExportParams{Quality: quality, Lossless: !lossy})
-			return writeToBuffer(imgBuf, bytes, error)
+		return writeToBuffer(imgBuf, bytes, error)
 	case "avif":
 		bytes, _, error := image.ExportAvif(&vips.AvifExportParams{Effort: DEFAULT_EFFORT, Quality: int(quality)})
-			return writeToBuffer(imgBuf, bytes, error)
+		return writeToBuffer(imgBuf, bytes, error)
 	}
 	return errors.New("unsupported format: " + format)
 }
@@ -123,11 +123,11 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 func createHandler(mux *http.ServeMux) http.Handler {
 	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
 	allowedOrigins := strings.Split(strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS")), ",")
-	
-	c := cors.New(cors.Options{    
-		AllowedOrigins: allowedOrigins,
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   allowedOrigins,
 		AllowCredentials: true,
-		Debug: isDevelopment,})
+		Debug:            isDevelopment})
 
 	return c.Handler(mux)
 }
@@ -140,7 +140,7 @@ func main() {
 	defer vips.Shutdown()
 
 	mux := http.NewServeMux()
-	
+
 	mux.HandleFunc("POST /convert", convertHandler)
 
 	handler := createHandler(mux)
