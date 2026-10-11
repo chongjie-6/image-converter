@@ -150,6 +150,10 @@ func main() {
 	})
 
 	handler := createHandler(mux)
-	log.Println("listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Println("listening on :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }
