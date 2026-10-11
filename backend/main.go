@@ -43,7 +43,7 @@ func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, qual
 		bytes, _, error := image.ExportJpeg(&vips.JpegExportParams{Interlace: true, Quality: quality})
 		return writeToBuffer(imgBuf, bytes, error)
 	case "png":
-		bytes, _, error := image.ExportPng(&vips.PngExportParams{Compression: 10, Interlace: true, Quality: quality})
+		bytes, _, error := image.ExportPng(&vips.PngExportParams{Compression: 9, Interlace: true, Quality: quality})
 		return writeToBuffer(imgBuf, bytes, error)
 	case "gif":
 		bytes, _, error := image.ExportGIF(&vips.GifExportParams{Effort: DEFAULT_EFFORT})
