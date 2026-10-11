@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
@@ -144,13 +143,13 @@ export default function Home() {
             alt="Converted result"
             className="max-h-96 rounded border border-foreground/20 object-contain"
           />
-          <Link
+          <a
             href={result.url}
             download={result.name}
             className="self-start rounded border border-foreground/20 px-4 py-2 font-medium"
           >
             Download {result.name}
-          </Link>
+          </a>
         </section>
       )}
     </main>
