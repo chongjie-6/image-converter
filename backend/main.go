@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"github.com/chai2010/webp"
+	"github.com/vegidio/avif-go"
 )
 
 const (
@@ -26,6 +27,7 @@ var contentTypes = map[string]string{
 	"png":  "image/png",
 	"gif":  "image/gif",
 	"webp": "image/webp",
+	"avif": "image/avif",
 }
 
 func decode(r io.ReadSeeker) (image.Image, error) {
@@ -62,6 +64,8 @@ func encode(w io.Writer, img image.Image, format string, quality int, lossy bool
 		return gif.Encode(w, flatten(img), nil)
 	case "webp":
 		return webp.Encode(w, img, &webp.Options{Lossless: !lossy, Quality: float32(quality)})
+	case "avif":
+		return avif.Encode(w, img, &avif.Options{Speed: 8, ColorQuality: int(quality)})
 	}
 	return errors.New("unsupported format")
 }
@@ -85,7 +89,7 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	format := r.FormValue("format")
 	contentType, ok := contentTypes[format]
 	if !ok {
-		http.Error(w, "format must be one of jpeg, png, gif, webp", http.StatusBadRequest)
+		http.Error(w, "format must be one of jpeg, png, gif, webp or avif", http.StatusBadRequest)
 		return
 	}
 

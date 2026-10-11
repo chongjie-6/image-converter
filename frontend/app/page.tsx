@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const FORMATS = ["jpeg", "png", "gif", "webp"];
+const FORMATS = ["jpeg", "png", "gif", "webp", "avif"];
 
 type Result = { url: string; name: string; before: number; after: number };
 
@@ -60,7 +60,7 @@ export default function Home() {
           <input
             name="file"
             type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp"
+            accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
             required
             className="rounded border border-foreground/20 p-2 file:mr-3 file:rounded file:border-0 file:bg-foreground/10 file:px-3 file:py-1"
           />
