@@ -128,10 +128,17 @@ export default function Home() {
         <section className="mt-8 flex flex-col gap-3">
           <p className="text-sm">
             {kb(result.before)} → {kb(result.after)} (
-            {Math.round((result.after / result.before - 1) * 100).toLocaleString(undefined, { signDisplay: "exceptZero" })}%)
+            {Math.round(
+              (result.after / result.before - 1) * 100,
+            ).toLocaleString(undefined, { signDisplay: "exceptZero" })}
+            %)
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element -- blob URL, next/image can't optimize it */}
-          <img src={result.url} alt="Converted result" className="max-h-96 rounded border border-foreground/20 object-contain" />
+          <img
+            src={result.url}
+            alt="Converted result"
+            className="max-h-96 rounded border border-foreground/20 object-contain"
+          />
           <a
             href={result.url}
             download={result.name}
