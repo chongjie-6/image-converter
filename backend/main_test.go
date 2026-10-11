@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/davidbyttow/govips/v2/vips"
 )
 
 func post(src []byte, format string) *httptest.ResponseRecorder {
@@ -29,13 +31,21 @@ func TestConvert(t *testing.T) {
 	var src bytes.Buffer
 	png.Encode(&src, image.NewNRGBA(image.Rect(0, 0, 16, 16)))
 
+	// Go's image package can't decode AVIF, so sniff the output with libvips instead.
+	types := map[string]vips.ImageType{
+		"jpeg": vips.ImageTypeJPEG,
+		"png":  vips.ImageTypePNG,
+		"gif":  vips.ImageTypeGIF,
+		"webp": vips.ImageTypeWEBP,
+		"avif": vips.ImageTypeAVIF,
+	}
 	for format := range contentTypes {
 		rec := post(src.Bytes(), format)
 		if rec.Code != 200 {
 			t.Fatalf("%s: status %d: %s", format, rec.Code, rec.Body)
 		}
-		if _, got, err := image.DecodeConfig(rec.Body); err != nil || got != format {
-			t.Errorf("%s: decoded as %q, err %v", format, got, err)
+		if got := vips.DetermineImageType(rec.Body.Bytes()); got != types[format] {
+			t.Errorf("%s: output detected as %v", format, got)
 		}
 	}
 
