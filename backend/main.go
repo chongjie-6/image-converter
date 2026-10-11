@@ -122,7 +122,7 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf.Bytes())
 }
 
-func createHandler(fn func(w http.ResponseWriter, r *http.Request)) http.Handler {
+func createHandler(mux *http.ServeMux) http.Handler {
 	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
 	allowedOrigins := strings.Split(strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS")), ",")
 	
@@ -131,7 +131,7 @@ func createHandler(fn func(w http.ResponseWriter, r *http.Request)) http.Handler
 		AllowCredentials: true,
 		Debug: isDevelopment,})
 
-	return c.Handler(http.HandlerFunc(fn))
+	return c.Handler(mux)
 }
 
 func main() {
@@ -140,7 +140,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	
-	mux.Handle("POST /convert", createHandler(convertHandler))
+	mux.HandleFunc("POST /convert", convertHandler)
+
+	handler := createHandler(mux)
 	log.Println("listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
