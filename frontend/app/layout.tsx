@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Image Converter",
-  description: "Convert images between JPEG, PNG and GIF",
+  description: "Convert images between JPEG, PNG, GIF, WebP and AVIF",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
