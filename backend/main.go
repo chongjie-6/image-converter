@@ -122,7 +122,10 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 
 func createHandler(mux *http.ServeMux) http.Handler {
 	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
-	allowedOrigins := strings.Split(strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS")), ",")
+	allowedOrigins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
+	for i, o := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(o)
+	}
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
