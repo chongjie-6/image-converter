@@ -45,7 +45,7 @@ func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, qual
 		bytes, _, error := image.ExportPng(&vips.PngExportParams{Compression: 10, Interlace: true, Quality: quality})
 			return writeToBuffer(imgBuf, bytes, error)
 	case "gif":
-		bytes, _, error := image.ExportGIF(&vips.GifExportParams{Quality: quality, Effort: DEFAULT_EFFORT})
+		bytes, _, error := image.ExportGIF(&vips.GifExportParams{Effort: DEFAULT_EFFORT})
 			return writeToBuffer(imgBuf, bytes, error)
 	case "webp":
 		bytes, _, error := image.ExportWebp(&vips.WebpExportParams{Quality: quality, Lossless: !lossy})
@@ -88,10 +88,25 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	img, err := vips.LoadImageFromReader(file, &vips.ImportParams{})
+	// Sequential access only reads the header here, so oversized dimensions are rejected before any pixels decode.
+	params := &vips.ImportParams{}
+	params.Access.Set(vips.AccessSequential)
+	img, err := vips.LoadImageFromReader(file, params)
 	if err != nil {
 		http.Error(w, "could not read image: "+err.Error(), http.StatusBadRequest)
 		return
+	}
+	defer img.Close()
+	if img.Width()*img.Height() > maxPixels {
+		http.Error(w, "image dimensions too large", http.StatusBadRequest)
+		return
+	}
+	// JPEG has no alpha, and libvips would otherwise flatten transparency onto black.
+	if format == "jpeg" && img.HasAlpha() {
+		if err := img.Flatten(&vips.Color{R: 255, G: 255, B: 255}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	lossy := r.FormValue("lossy") == "true"
