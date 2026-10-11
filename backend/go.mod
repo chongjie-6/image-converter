@@ -1,6 +1,6 @@
 module imageconverter
 
-go 1.27.2
+go 1.27.1
 
 require (
 	github.com/chai2010/webp v1.4.0
