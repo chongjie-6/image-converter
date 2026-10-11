@@ -18,6 +18,7 @@ const (
 	maxUpload      = 20 << 20
 	maxPixels      = 50_000_000
 	DEFAULT_EFFORT = 8
+	AVIF_EFFORT    = 2
 )
 
 var contentTypes = map[string]string{
@@ -51,7 +52,8 @@ func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, qual
 		bytes, _, error := image.ExportWebp(&vips.WebpExportParams{Quality: quality, Lossless: !lossy})
 		return writeToBuffer(imgBuf, bytes, error)
 	case "avif":
-		bytes, _, error := image.ExportAvif(&vips.AvifExportParams{Effort: DEFAULT_EFFORT, Quality: int(quality)})
+		// govips ignores Effort unless Bitdepth is also set.
+		bytes, _, error := image.ExportAvif(&vips.AvifExportParams{Bitdepth: 8, Effort: AVIF_EFFORT, Quality: quality})
 		return writeToBuffer(imgBuf, bytes, error)
 	}
 	return errors.New("unsupported format: " + format)
