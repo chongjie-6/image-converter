@@ -3,28 +3,21 @@ package main
 import (
 	"bytes"
 	"errors"
-	"image"
-	"image/draw"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/chai2010/webp"
+	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
-	"github.com/vegidio/avif-go"
 )
 
 const (
 	maxUpload = 20 << 20
 	maxPixels = 50_000_000
-	AVIF_SPEED = 8
+	DEFAULT_EFFORT = 8
 )
 
 var contentTypes = map[string]string{
@@ -35,44 +28,33 @@ var contentTypes = map[string]string{
 	"avif": "image/avif",
 }
 
-func decode(r io.ReadSeeker) (image.Image, error) {
-	// Check dimensions from the header first so a tiny file can't decode into gigabytes of pixels.
-	cfg, _, err := image.DecodeConfig(r)
+func writeToBuffer(imgBuf *bytes.Buffer, b []byte, err error) error {
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if cfg.Width*cfg.Height > maxPixels {
-		return nil, errors.New("image dimensions too large")
-	}
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return nil, err
-	}
-	img, _, err := image.Decode(r)
-	return img, err
+	_, err = imgBuf.Write(b)
+	return err
 }
 
-// flatten composites onto white, since JPEG and the Plan9 GIF palette would otherwise turn transparency black.
-func flatten(img image.Image) image.Image {
-	dst := image.NewRGBA(img.Bounds())
-	draw.Draw(dst, dst.Bounds(), image.White, image.Point{}, draw.Src)
-	draw.Draw(dst, dst.Bounds(), img, img.Bounds().Min, draw.Over)
-	return dst
-}
-
-func encode(w io.Writer, img image.Image, format string, quality int, lossy bool) error {
+func exportImage(imgBuf *bytes.Buffer, image *vips.ImageRef, format string, quality int, lossy bool) (error) {
 	switch format {
 	case "jpeg":
-		return jpeg.Encode(w, flatten(img), &jpeg.Options{Quality: quality})
+		bytes, _, error := image.ExportJpeg(&vips.JpegExportParams{Interlace: true, Quality: quality})
+			return writeToBuffer(imgBuf, bytes, error)
 	case "png":
-		return png.Encode(w, img)
+		bytes, _, error := image.ExportPng(&vips.PngExportParams{Compression: 10, Interlace: true, Quality: quality})
+			return writeToBuffer(imgBuf, bytes, error)
 	case "gif":
-		return gif.Encode(w, flatten(img), nil)
+		bytes, _, error := image.ExportGIF(&vips.GifExportParams{Quality: quality, Effort: DEFAULT_EFFORT})
+			return writeToBuffer(imgBuf, bytes, error)
 	case "webp":
-		return webp.Encode(w, img, &webp.Options{Lossless: !lossy, Quality: float32(quality)})
+		bytes, _, error := image.ExportWebp(&vips.WebpExportParams{Quality: quality, Lossless: !lossy})
+			return writeToBuffer(imgBuf, bytes, error)
 	case "avif":
-		return avif.Encode(w, img, &avif.Options{Speed: AVIF_SPEED, ColorQuality: int(quality)})
+		bytes, _, error := image.ExportAvif(&vips.AvifExportParams{Effort: DEFAULT_EFFORT, Quality: int(quality)})
+			return writeToBuffer(imgBuf, bytes, error)
 	}
-	return errors.New("unsupported format")
+	return errors.New("unsupported format: " + format)
 }
 
 func convertHandler(w http.ResponseWriter, r *http.Request) {
@@ -106,7 +88,7 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	img, err := decode(file)
+	img, err := vips.LoadImageFromReader(file, &vips.ImportParams{})
 	if err != nil {
 		http.Error(w, "could not read image: "+err.Error(), http.StatusBadRequest)
 		return
@@ -114,7 +96,8 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 
 	lossy := r.FormValue("lossy") == "true"
 	var buf bytes.Buffer
-	if err := encode(&buf, img, format, quality, lossy); err != nil {
+
+	if err := exportImage(&buf, img, format, quality, lossy); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -137,6 +120,9 @@ func createHandler(mux *http.ServeMux) http.Handler {
 func main() {
 	// .env is optional; in production, env vars come from the host
 	_ = godotenv.Load()
+
+	vips.Startup(nil)
+	defer vips.Shutdown()
 
 	mux := http.NewServeMux()
 	
