@@ -45,4 +45,13 @@ func TestConvert(t *testing.T) {
 	if rec := post([]byte("not an image"), "png"); rec.Code != 400 {
 		t.Errorf("garbage: want 400, got %d", rec.Code)
 	}
+
+	// The PNG decoder stops at IEND, so trailing padding still decodes.
+	atLimit := append(src.Bytes(), make([]byte, maxUpload-src.Len())...)
+	if rec := post(atLimit, "png"); rec.Code != 200 {
+		t.Errorf("file at limit: want 200, got %d: %s", rec.Code, rec.Body)
+	}
+	if rec := post(append(atLimit, 0), "png"); rec.Code != 413 {
+		t.Errorf("file over limit: want 413, got %d", rec.Code)
+	}
 }

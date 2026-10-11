@@ -68,14 +68,19 @@ func encode(w io.Writer, img image.Image, format string, quality int, lossy bool
 
 func convertHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	r.Body = http.MaxBytesReader(w, r.Body, maxUpload)
+	// Headroom for the multipart boundaries and other fields; the file itself is checked against maxUpload below.
+	r.Body = http.MaxBytesReader(w, r.Body, maxUpload+1<<20)
 
-	file, _, err := r.FormFile("file")
+	file, header, err := r.FormFile("file")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer file.Close()
+	if header.Size > maxUpload {
+		http.Error(w, "file must be 20 MB or smaller", http.StatusRequestEntityTooLarge)
+		return
+	}
 
 	format := r.FormValue("format")
 	contentType, ok := contentTypes[format]
