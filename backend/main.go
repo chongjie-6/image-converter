@@ -12,6 +12,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/chai2010/webp"
 )
 
 const (
@@ -23,6 +25,7 @@ var contentTypes = map[string]string{
 	"jpeg": "image/jpeg",
 	"png":  "image/png",
 	"gif":  "image/gif",
+	"webp": "image/webp",
 }
 
 func decode(r io.ReadSeeker) (image.Image, error) {
@@ -49,7 +52,7 @@ func flatten(img image.Image) image.Image {
 	return dst
 }
 
-func encode(w io.Writer, img image.Image, format string, quality int) error {
+func encode(w io.Writer, img image.Image, format string, quality int, lossy bool) error {
 	switch format {
 	case "jpeg":
 		return jpeg.Encode(w, flatten(img), &jpeg.Options{Quality: quality})
@@ -57,6 +60,8 @@ func encode(w io.Writer, img image.Image, format string, quality int) error {
 		return png.Encode(w, img)
 	case "gif":
 		return gif.Encode(w, flatten(img), nil)
+	case "webp":
+		return webp.Encode(w, img, &webp.Options{Lossless: !lossy, Quality: float32(quality)})
 	}
 	return errors.New("unsupported format")
 }
@@ -75,7 +80,7 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	format := r.FormValue("format")
 	contentType, ok := contentTypes[format]
 	if !ok {
-		http.Error(w, "format must be one of jpeg, png, gif", http.StatusBadRequest)
+		http.Error(w, "format must be one of jpeg, png, gif, webp", http.StatusBadRequest)
 		return
 	}
 
@@ -94,8 +99,9 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	lossy := r.FormValue("lossy") == "true"
 	var buf bytes.Buffer
-	if err := encode(&buf, img, format, quality); err != nil {
+	if err := encode(&buf, img, format, quality, lossy); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

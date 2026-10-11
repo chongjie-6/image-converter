@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
-const FORMATS = ["jpeg", "png", "gif"];
+const FORMATS = ["jpeg", "png", "gif", "webp"];
 
 type Result = { url: string; name: string; before: number; after: number };
 
@@ -12,13 +12,17 @@ const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
 export default function Home() {
   const [format, setFormat] = useState("jpeg");
   const [quality, setQuality] = useState(80);
+  const [webpLossy, setWebpLossy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const lossy = format === "jpeg" || (format === "webp" && webpLossy);
+
   async function convert(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const body = new FormData(e.currentTarget);
+    body.append("lossy", String(lossy));
     const file = body.get("file") as File;
     setBusy(true);
     setError("");
@@ -40,8 +44,6 @@ export default function Home() {
     }
   }
 
-  const lossy = format === "jpeg";
-
   return (
     <main className="mx-auto w-full max-w-xl p-6 sm:p-10">
       <h1 className="mb-6 text-2xl font-semibold">Image Converter</h1>
@@ -52,7 +54,7 @@ export default function Home() {
           <input
             name="file"
             type="file"
-            accept="image/jpeg,image/png,image/gif"
+            accept="image/jpeg,image/png,image/gif,image/webp"
             required
             className="rounded border border-foreground/20 p-2 file:mr-3 file:rounded file:border-0 file:bg-foreground/10 file:px-3 file:py-1"
           />
@@ -73,6 +75,17 @@ export default function Home() {
             ))}
           </select>
         </label>
+
+        {format === "webp" && (
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={webpLossy}
+              onChange={(e) => setWebpLossy(e.target.checked)}
+            />
+            <span className="text-sm font-medium">Lossy</span>
+          </label>
+        )}
 
         <label className="flex flex-col gap-2">
           <span className="text-sm font-medium">
