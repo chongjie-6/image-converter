@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 const FORMATS = ["jpeg", "png", "gif", "webp", "avif"];
@@ -20,6 +20,11 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
 
   const lossy = format === "jpeg" || (format === "webp" && webpLossy);
+
+  // Wake a cold-started backend so the first conversion doesn't wait on it.
+  useEffect(() => {
+    fetch(`${API}/ping`).catch(() => {});
+  }, []);
 
   async function convert(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

@@ -145,6 +145,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /convert", convertHandler)
+	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
 
 	handler := createHandler(mux)
 	log.Println("listening on http://localhost:8080")
