@@ -1,4 +1,8 @@
 github.com/chai2010/webp v1.4.0 h1:6DA2pkkRUPnbOHvvsmGI3He1hBKf/bkRlniAiSGuEko=
 github.com/chai2010/webp v1.4.0/go.mod h1:0XVwvZWdjjdxpUEIf7b9g9VkHFnInUSYujwqTLEuldU=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/rs/cors v1.11.1 h1:eU3gRzXLRK57F5rKMGMZURNdIG4EoAmX8k94r9wXWHA=
+github.com/rs/cors v1.11.1/go.mod h1:XyqrcTp5zjWr1wsJ8PIRZssZ8b/WMcMf71DJnit4EMU=
 github.com/vegidio/avif-go v0.0.0-20260715095249-dbb32e4e0094 h1:+t7sveCgIpd/Klx6RCx8wBAnPjiomGDVD/vdLxnBCIg=
 github.com/vegidio/avif-go v0.0.0-20260715095249-dbb32e4e0094/go.mod h1:/ITCFP53XCH3zFZZLLtPm3jRqsv5CMgefZl4UCuP1rs=

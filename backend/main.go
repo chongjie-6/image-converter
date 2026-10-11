@@ -11,15 +11,20 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/chai2010/webp"
+	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"github.com/vegidio/avif-go"
 )
 
 const (
 	maxUpload = 20 << 20
 	maxPixels = 50_000_000
+	AVIF_SPEED = 8
 )
 
 var contentTypes = map[string]string{
@@ -65,13 +70,12 @@ func encode(w io.Writer, img image.Image, format string, quality int, lossy bool
 	case "webp":
 		return webp.Encode(w, img, &webp.Options{Lossless: !lossy, Quality: float32(quality)})
 	case "avif":
-		return avif.Encode(w, img, &avif.Options{Speed: 8, ColorQuality: int(quality)})
+		return avif.Encode(w, img, &avif.Options{Speed: AVIF_SPEED, ColorQuality: int(quality)})
 	}
 	return errors.New("unsupported format")
 }
 
 func convertHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	// Headroom for the multipart boundaries and other fields; the file itself is checked against maxUpload below.
 	r.Body = http.MaxBytesReader(w, r.Body, maxUpload+1<<20)
 
@@ -118,8 +122,28 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(buf.Bytes())
 }
 
+func createHandler(fn func(w http.ResponseWriter, r *http.Request)) http.Handler {
+	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
+	allowedOrigins := strings.Split(strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS")), ",")
+	
+	c := cors.New(cors.Options{    
+		AllowedOrigins: allowedOrigins,
+		AllowCredentials: true,
+		Debug: isDevelopment,})
+
+	return c.Handler(http.HandlerFunc(fn))
+}
+
 func main() {
-	http.HandleFunc("POST /convert", convertHandler)
+	// Load env variables into os
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	mux := http.NewServeMux()
+	
+	mux.Handle("POST /convert", createHandler(convertHandler))
 	log.Println("listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", mux))
 }
