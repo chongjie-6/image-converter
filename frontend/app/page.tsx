@@ -19,7 +19,8 @@ export default function Home() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const lossy = format === "jpeg" || (format === "webp" && webpLossy);
+  const lossy =
+    format === "jpeg" || format === "avif" || (format === "webp" && webpLossy);
 
   // Wake a cold-started backend so the first conversion doesn't wait on it.
   useEffect(() => {
