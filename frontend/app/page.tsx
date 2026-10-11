@@ -14,7 +14,7 @@ const maxMB = 20;
 export default function Home() {
   const [format, setFormat] = useState("jpeg");
   const [quality, setQuality] = useState(80);
-  const [webpLossy, setWebpLossy] = useState(false);
+  const [webpLossy, setWebpLossy] = useState(true);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
